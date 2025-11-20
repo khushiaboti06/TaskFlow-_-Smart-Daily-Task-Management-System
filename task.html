@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>TaskFlow | Tasks</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    html,body { height:100%; }
+    body { display:flex; flex-direction:column; min-height:100vh; margin:0; background:#f8f9fa; }
+    .content { flex:1; padding:32px 16px; }
+    .task-panel { background:#fff; padding:20px; border-radius:10px; box-shadow:0 6px 18px rgba(0,0,0,0.06); }
+    .task-actions button { margin-right:6px; }
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="index.html">TaskFlow</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="mainNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item"><a class="nav-link" href="index.html">Home</a></li>
+          <li class="nav-item"><a class="nav-link" href="z_dashboard.html">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link active" href="task.html">Tasks</a></li>
+          <li class="nav-item"><a class="nav-link" href="profile.html">Profile</a></li>
+          <li class="nav-item"><a class="nav-link" href="x_about.html">About</a></li>
+          <li class="nav-item"><a class="nav-link" href="y_contact.html">Contact</a></li>
+          <li class="nav-item"><a class="nav-link" href="login.html">Login</a></li>
+          <li class="nav-item"><a class="nav-link" href="register.html">Register</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <main class="content container">
+    <h2 class="fw-bold mb-4 text-center">Manage Tasks</h2>
+
+    <div class="row g-4">
+      <div class="col-lg-4">
+        <div class="task-panel">
+          <h5 class="mb-3">Add Task</h5>
+          <form id="addTaskForm">
+            <div class="mb-2"><input id="title" class="form-control" placeholder="Title" required></div>
+            <div class="mb-2"><textarea id="desc" class="form-control" rows="3" placeholder="Description"></textarea></div>
+            <div class="mb-2">
+              <select id="status" class="form-select">
+                <option value="Pending">Pending</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Completed">Completed</option>
+              </select>
+            </div>
+            <button class="btn btn-primary w-100" type="submit">Add Task</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="col-lg-8">
+        <div class="task-panel">
+          <h5 class="mb-3">Your Tasks</h5>
+          <table class="table table-bordered table-hover" id="tasksTable">
+            <thead class="table-light">
+              <tr><th>#</th><th>Title</th><th>Status</th><th>Actions</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+
+          <p class="text-muted small">Tasks stored locally in browser (demo).</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="py-3 text-center" style="background:#111;color:#fff;">© 2025 TaskFlow. All Rights Reserved.</footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    (function(){
+      const file = location.pathname.split('/').pop()||'index.html';
+      document.querySelectorAll('.nav-link').forEach(a=>{ if(a.getAttribute('href')===file) a.classList.add('active'); });
+    })();
+
+    // simple local tasks (demo)
+    let tasks = JSON.parse(localStorage.getItem('tf_tasks')||'[]');
+    const tbody = document.querySelector('#tasksTable tbody');
+
+    function render() {
+      tbody.innerHTML = '';
+      tasks.forEach((t,i)=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${i+1}</td>
+          <td>${escapeHtml(t.title)}</td>
+          <td><span class="badge ${t.status==='Completed'?'bg-success': t.status==='In Progress'?'bg-secondary':'bg-warning text-dark'}">${t.status}</span></td>
+          <td class="task-actions">
+            ${t.status!=='Completed'?`<button class="btn btn-sm btn-success" onclick="markDone(${i})">Done</button>`:''}
+            <button class="btn btn-sm btn-danger" onclick="del(${i})">Delete</button>
+          </td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function escapeHtml(s){ return (s+'').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+
+    document.getElementById('addTaskForm').addEventListener('submit', function(e){
+      e.preventDefault();
+      const title = document.getElementById('title').value.trim();
+      const desc = document.getElementById('desc').value.trim();
+      const status = document.getElementById('status').value;
+      if(!title) { alert('Enter a title'); return; }
+      tasks.unshift({ title, desc, status, createdAt: new Date().toLocaleString() });
+      localStorage.setItem('tf_tasks', JSON.stringify(tasks));
+      this.reset();
+      render();
+    });
+
+    function del(i){ if(!confirm('Delete this task?')) return; tasks.splice(i,1); localStorage.setItem('tf_tasks', JSON.stringify(tasks)); render(); }
+    function markDone(i){ tasks[i].status='Completed'; localStorage.setItem('tf_tasks', JSON.stringify(tasks)); render(); }
+
+    render();
+  </script>
+</body>
+</html>
